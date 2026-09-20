@@ -1,0 +1,49 @@
+# Git
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# Environment
+.env
+.env.*
+
+# Logs
+logs/*.log
+
+# Database
+database/*.db
+
+# Documentation
+docs/
+*.md
+!requirements.txt
+
+# OS
+.DS_Store
+Thumbs.db
+
+# OpenCode internals
+.codegraph/
+omo/
+omo/
+omo/*.md
+
+# Test files
+tests/
+
+# Review files
+review-*
+task-*
