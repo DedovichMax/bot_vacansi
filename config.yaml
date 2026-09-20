@@ -1,0 +1,74 @@
+# Telegram settings
+telegram:
+  api_id: "YOUR_API_ID"
+  api_hash: "YOUR_API_HASH"
+  bot_token: "YOUR_BOT_TOKEN"
+  target_channel: "@your_vacancy_channel"
+
+# Channels to monitor
+channels:
+  - "@job_channel_1"
+  - "@job_channel_2"
+
+# Filters
+filters:
+  - name: "Junior позиции"
+    phrases:
+      - "junior media buyer"
+      - "junior medua buyer"
+      - "младший медиабайер"
+      - "начинающий медиабайер"
+    exclude:
+      - "senior junior"
+    weight: 10
+
+  - name: "Без опыта"
+    phrases:
+      - "без опыта"
+      - "для начинающих"
+      - "обучим с нуля"
+      - "обучение с нуля"
+    weight: 8
+
+  - name: "Farmer"
+    phrases:
+      - "farmer"
+      - "фармер"
+      - "accounts farmer"
+      - "аккаунт фармер"
+    weight: 7
+
+  - name: "Ассистент"
+    phrases:
+      - "assistant media buyer"
+      - "assistent media buyer"
+      - "ассистент медиабайер"
+      - "помощник медиабайера"
+    weight: 8
+
+# Schedule settings
+schedule:
+  check_interval_minutes: 15
+  active_hours:
+    start: 9
+    end: 22
+
+# Web panel
+web:
+  host: "0.0.0.0"
+  port: 8000
+  username: "admin"
+  password: "your_secure_password"
+
+# Logging
+logging:
+  level: "INFO"
+  file: "logs/bot.log"
+  max_size_mb: 10
+  backup_count: 5
+
+# Backups
+backup:
+  enabled: true
+  interval_hours: 24
+  keep_last: 7
