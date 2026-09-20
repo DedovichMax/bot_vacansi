@@ -14,6 +14,7 @@ def setup_logger(log_file: str = "logs/bot.log", level: str = "INFO") -> None:
     # Create logger
     _logger = logging.getLogger("vacancy_bot")
     _logger.setLevel(getattr(logging, level.upper()))
+    _logger.propagate = False
     
     # Clear existing handlers to avoid duplication and allow reconfiguration
     _logger.handlers.clear()
