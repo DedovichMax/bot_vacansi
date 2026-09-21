@@ -33,7 +33,7 @@ class TelegramNotifier:
             logger.info("Notifier client stopped")
 
     def format_message(
-        self, vacancy: FilterResult, channel: str = None, message_id: int = None
+        self, vacancy: FilterResult, channel: str | None = None, message_id: int | None = None
     ) -> str:
         """Format vacancy as message."""
         link = f"https://t.me/{channel}/{message_id}" if channel and message_id else "N/A"
@@ -52,7 +52,7 @@ class TelegramNotifier:
         return message
 
     async def send_vacancy(
-        self, vacancy: FilterResult, channel: str = None, message_id: int = None
+        self, vacancy: FilterResult, channel: str | None = None, message_id: int | None = None
     ) -> bool:
         """Send vacancy notification to target channel."""
         if not self.client:
@@ -60,6 +60,7 @@ class TelegramNotifier:
 
         try:
             message = self.format_message(vacancy, channel, message_id)
+            assert self.client is not None
             await self.client.send_message(self.target_channel, message)
             logger.info(f"Vacancy sent to {self.target_channel}")
             return True
@@ -74,6 +75,7 @@ class TelegramNotifier:
 
         try:
             message = f"❌ Ошибка бота:\n\n{error}"
+            assert self.client is not None
             await self.client.send_message(self.target_channel, message)
             return True
         except Exception as e:

@@ -88,6 +88,7 @@ class TelegramCollector:
 
         try:
             # Get last 10 messages
+            assert self.client is not None
             async for message in self.client.iter_messages(formatted_channel, limit=10):
                 if isinstance(message, Message):
                     # Check if already processed

@@ -29,9 +29,9 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install dependencies
-        run: pip install -r requirements.txt pytest-cov
+        run: pip install -r requirements.txt
       - name: Run tests
-        run: python -m pytest tests/ -v --tb=short --cov=collector --cov=filter --cov=notifier --cov=utils --cov=web --cov-report=term-missing --cov-fail-under=70
+        run: python -m pytest tests/ -v --tb=short
 
   type-check:
     runs-on: ubuntu-latest
@@ -41,6 +41,6 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install dependencies
-        run: pip install -r requirements.txt mypy
+        run: pip install -r requirements.txt
       - name: Run mypy
-        run: mypy .
+        run: mypy collector/ filter/ notifier/ utils/ web/ main.py

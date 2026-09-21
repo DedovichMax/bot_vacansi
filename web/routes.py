@@ -11,7 +11,7 @@ router = APIRouter()
 
 def _get_db(request: Request) -> Database:
     """Get database instance from app state."""
-    return request.app.state.db
+    return request.app.state.db  # type: ignore[no-any-return]
 
 
 # --- Health (no auth) ---

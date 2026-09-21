@@ -28,7 +28,7 @@ def load_config(config_path: str = "config.yaml") -> dict:
         yaml.YAMLError: If config file contains invalid YAML.
     """
     with open(config_path, encoding="utf-8") as f:
-        return yaml.safe_load(f)
+        return yaml.safe_load(f)  # type: ignore[no-any-return]
 
 
 async def check_and_notify(

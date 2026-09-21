@@ -92,7 +92,7 @@ class Database:
         cursor = conn.cursor()
         cursor.execute("INSERT INTO channels (channel_name) VALUES (?)", (channel_name,))
         conn.commit()
-        channel_id = cursor.lastrowid
+        channel_id: int = cursor.lastrowid  # type: ignore[assignment]
         conn.close()
         return channel_id
 
@@ -117,7 +117,7 @@ class Database:
 
     # Filter operations
     def add_filter(
-        self, name: str, phrases: list[str], exclude: list[str] = None, weight: int = 5
+        self, name: str, phrases: list[str], exclude: list[str] | None = None, weight: int = 5
     ) -> int:
         """Add a new filter."""
         conn = self._get_conn()
@@ -127,7 +127,7 @@ class Database:
             (name, json.dumps(phrases), json.dumps(exclude) if exclude else None, weight),
         )
         conn.commit()
-        filter_id = cursor.lastrowid
+        filter_id: int = cursor.lastrowid  # type: ignore[assignment]
         conn.close()
         return filter_id
 
@@ -178,7 +178,7 @@ class Database:
             (channel_name, message_id, category, matched_phrase, weight, text, link),
         )
         conn.commit()
-        vacancy_id = cursor.lastrowid
+        vacancy_id: int = cursor.lastrowid  # type: ignore[assignment]
         conn.close()
         return vacancy_id
 
@@ -200,7 +200,7 @@ class Database:
             "SELECT COUNT(*) FROM processed_messages WHERE channel_name = ? AND message_id = ?",
             (channel_name, message_id),
         )
-        count = cursor.fetchone()[0]
+        count: int = cursor.fetchone()[0]
         conn.close()
         return count > 0
 
@@ -216,7 +216,9 @@ class Database:
         conn.close()
 
     # Error logging
-    def log_error(self, error_type: str, error_message: str, channel_name: str = None) -> None:
+    def log_error(
+        self, error_type: str, error_message: str, channel_name: str | None = None
+    ) -> None:
         """Log an error."""
         conn = self._get_conn()
         cursor = conn.cursor()

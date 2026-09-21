@@ -14,7 +14,7 @@ def _get_web_config(request: Request) -> dict:
 
 def verify_credentials(
     credentials: HTTPBasicCredentials = Depends(security),
-    request: Request = None,
+    request: Request = None,  # type: ignore[assignment]
 ) -> str:
     """Verify HTTP Basic Auth credentials.
 
@@ -28,7 +28,7 @@ def verify_credentials(
     Raises:
         HTTPException: 401 if credentials are invalid.
     """
-    web_config = _get_web_config(request) if request else {}
+    web_config = _get_web_config(request)
     correct_username = web_config.get("username", "admin")
     correct_password = web_config.get("password", "password")
 

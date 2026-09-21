@@ -39,4 +39,5 @@ def get_logger() -> logging.Logger:
     global _logger
     if _logger is None:
         setup_logger()
+    assert _logger is not None
     return _logger
