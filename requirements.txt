@@ -1,4 +1,4 @@
-httpx
+telethon==1.34.0
 pyyaml==6.0.1
 fastapi==0.115.0
 uvicorn==0.30.0
@@ -6,7 +6,6 @@ jinja2==3.1.4
 apscheduler==3.10.4
 python-multipart==0.0.9
 aiofiles==24.1.0
-python-dotenv==1.0.1
 
 # Dev dependencies
 ruff>=0.4.0

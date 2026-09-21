@@ -1,13 +1,10 @@
 # main.py
 import asyncio
-import os
-import signal
 
 import uvicorn
 import yaml
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
-from dotenv import load_dotenv
 
 from collector.telegram_collector import TelegramCollector
 from filter.vacancy_filter import VacancyFilter
@@ -18,44 +15,20 @@ from web.app import create_app
 
 
 def load_config(config_path: str = "config.yaml") -> dict:
-    """Load configuration from YAML file, with .env overrides.
+    """Load configuration from YAML file.
 
     Args:
         config_path: Path to the YAML configuration file.
 
     Returns:
-        Parsed configuration dictionary with .env overrides applied.
+        Parsed configuration dictionary.
 
     Raises:
         FileNotFoundError: If config file does not exist.
         yaml.YAMLError: If config file contains invalid YAML.
     """
-    # Load .env file
-    load_dotenv()
-
     with open(config_path, encoding="utf-8") as f:
-        config = yaml.safe_load(f)
-
-    # Override with .env values if present
-    telegram = config.get("telegram", {})
-    if os.getenv("TELEGRAM_API_ID"):
-        telegram["api_id"] = os.getenv("TELEGRAM_API_ID")
-    if os.getenv("TELEGRAM_API_HASH"):
-        telegram["api_hash"] = os.getenv("TELEGRAM_API_HASH")
-    if os.getenv("TELEGRAM_BOT_TOKEN"):
-        telegram["bot_token"] = os.getenv("TELEGRAM_BOT_TOKEN")
-    if os.getenv("TARGET_CHANNEL"):
-        telegram["target_channel"] = os.getenv("TARGET_CHANNEL")
-    config["telegram"] = telegram
-
-    web = config.get("web", {})
-    if os.getenv("WEB_USERNAME"):
-        web["username"] = os.getenv("WEB_USERNAME")
-    if os.getenv("WEB_PASSWORD"):
-        web["password"] = os.getenv("WEB_PASSWORD")
-    config["web"] = web
-
-    return config
+        return yaml.safe_load(f)
 
 
 async def check_and_notify(
@@ -137,10 +110,6 @@ async def main() -> None:
     await collector.start()
     await notifier.start()
 
-    # Health check RSS service
-    if not await collector.check_health():
-        logger.warning("RSS service is not available. Some channels may not work.")
-
     # Setup scheduler
     scheduler = AsyncIOScheduler()
     schedule_config = config.get("schedule", {})
@@ -175,47 +144,16 @@ async def main() -> None:
 
     logger.info(f"Web panel starting on {web_config.get('host')}:{web_config.get('port')}")
 
-    # Graceful shutdown handler
-    shutdown_event = asyncio.Event()
-
-    def handle_shutdown(sig, frame):
-        logger.info(f"Received signal {sig}, initiating shutdown...")
-        shutdown_event.set()
-
-    signal.signal(signal.SIGINT, handle_shutdown)
-    signal.signal(signal.SIGTERM, handle_shutdown)
-
-    # Run server until shutdown signal
+    # Run forever
     try:
-        server_task = asyncio.create_task(server.serve())
-        shutdown_task = asyncio.create_task(shutdown_event.wait())
-
-        # Wait for either server to stop or shutdown signal
-        done, pending = await asyncio.wait(
-            [server_task, shutdown_task], return_when=asyncio.FIRST_COMPLETED
-        )
-
-        # Cancel remaining tasks
-        for task in pending:
-            task.cancel()
-            try:
-                await task
-            except asyncio.CancelledError:
-                pass
-
-    except asyncio.CancelledError:
+        await server.serve()
+    except KeyboardInterrupt:
         pass
     finally:
-        logger.info("Shutting down scheduler...")
-        scheduler.shutdown(wait=True)
-
-        logger.info("Stopping collector...")
+        scheduler.shutdown()
         await collector.stop()
-
-        logger.info("Stopping notifier...")
         await notifier.stop()
-
-        logger.info("Bot stopped gracefully")
+        logger.info("Bot stopped")
 
 
 if __name__ == "__main__":
