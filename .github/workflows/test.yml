@@ -15,7 +15,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install dependencies
-        run: pip install ruff black
+        run: pip install ruff
       - name: Ruff check
         run: ruff check .
       - name: Ruff format check
@@ -31,7 +31,7 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt pytest-cov
       - name: Run tests
-        run: python -m pytest tests/ -v --tb=short
+        run: python -m pytest tests/ -v --tb=short --cov=collector --cov=filter --cov=notifier --cov=utils --cov=web --cov-report=term-missing --cov-fail-under=70
 
   type-check:
     runs-on: ubuntu-latest
