@@ -233,46 +233,48 @@ import os
 import logging
 from utils.logger import setup_logger, get_logger
 
+
 def test_setup_logger_creates_log_file():
     """Test that setup_logger creates log directory and file."""
     log_dir = "logs"
     log_file = "logs/test.log"
-    
+
     # Clean up
     if os.path.exists(log_file):
         os.remove(log_file)
-    
+
     setup_logger(log_file=log_file)
     logger = get_logger()
-    
+
     assert os.path.exists(log_file)
     assert logger is not None
     assert logger.level == logging.INFO
-    
+
     # Cleanup
     if os.path.exists(log_file):
         os.remove(log_file)
 
+
 def test_logger_writes_to_file():
     """Test that logger actually writes to file."""
     log_file = "logs/test_write.log"
-    
+
     if os.path.exists(log_file):
         os.remove(log_file)
-    
+
     setup_logger(log_file=log_file)
     logger = get_logger()
-    
+
     logger.info("Test message")
-    
+
     # Force flush
     for handler in logger.handlers:
         handler.flush()
-    
-    with open(log_file, 'r') as f:
+
+    with open(log_file, "r") as f:
         content = f.read()
         assert "Test message" in content
-    
+
     # Cleanup
     if os.path.exists(log_file):
         os.remove(log_file)
@@ -296,35 +298,35 @@ from logging.handlers import RotatingFileHandler
 
 _logger = None
 
+
 def setup_logger(log_file: str = "logs/bot.log", level: str = "INFO") -> None:
     """Setup logger with rotating file handler."""
     global _logger
-    
+
     # Create log directory
     os.makedirs(os.path.dirname(log_file), exist_ok=True)
-    
+
     # Create logger
     _logger = logging.getLogger("vacancy_bot")
     _logger.setLevel(getattr(logging, level.upper()))
-    
+
     # Create formatter
-    formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    )
-    
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
     # File handler with rotation
     file_handler = RotatingFileHandler(
         log_file,
         maxBytes=10 * 1024 * 1024,  # 10MB
-        backupCount=5
+        backupCount=5,
     )
     file_handler.setFormatter(formatter)
     _logger.addHandler(file_handler)
-    
+
     # Console handler
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
     _logger.addHandler(console_handler)
+
 
 def get_logger() -> logging.Logger:
     """Get the logger instance."""
@@ -369,88 +371,92 @@ import os
 import sqlite3
 from utils.database import Database
 
+
 def test_database_initialization():
     """Test that database creates all tables on init."""
     db_path = "tests/test.db"
-    
+
     if os.path.exists(db_path):
         os.remove(db_path)
-    
+
     db = Database(db_path)
-    
+
     # Check tables exist
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     cursor.execute("SELECT name FROM sqlite_master WHERE type='table'")
     tables = [row[0] for row in cursor.fetchall()]
     conn.close()
-    
+
     assert "channels" in tables
     assert "filters" in tables
     assert "vacancies" in tables
     assert "processed_messages" in tables
     assert "error_log" in tables
-    
+
     # Cleanup
     os.remove(db_path)
+
 
 def test_add_channel():
     """Test adding a channel to database."""
     db_path = "tests/test_add_channel.db"
-    
+
     if os.path.exists(db_path):
         os.remove(db_path)
-    
+
     db = Database(db_path)
-    
+
     # Add channel
     channel_id = db.add_channel("@test_channel")
     assert channel_id is not None
-    
+
     # Get channels
     channels = db.get_channels()
     assert len(channels) == 1
     assert channels[0]["channel_name"] == "@test_channel"
     assert channels[0]["is_active"] == True
-    
+
     # Cleanup
     os.remove(db_path)
+
 
 def test_add_filter():
     """Test adding a filter to database."""
     db_path = "tests/test_add_filter.db"
-    
+
     if os.path.exists(db_path):
         os.remove(db_path)
-    
+
     db = Database(db_path)
-    
+
     # Add filter
     filter_id = db.add_filter(
         name="Test Filter",
         phrases=["test phrase", "another phrase"],
         exclude=["exclude me"],
-        weight=5
+        weight=5,
     )
     assert filter_id is not None
-    
+
     # Get filters
     filters = db.get_filters()
     assert len(filters) == 1
     assert filters[0]["name"] == "Test Filter"
-    
+
     # Cleanup
     os.remove(db_path)
+
 
 def test_add_vacancy():
     """Test adding a vacancy to database."""
     db_path = "tests/test_add_vacancy.db"
-    
+
     if os.path.exists(db_path):
         os.remove(db_path)
-    
+
     db = Database(db_path)
-    
+
     # Add vacancy
     vacancy_id = db.add_vacancy(
         channel_name="@test_channel",
@@ -459,39 +465,40 @@ def test_add_vacancy():
         matched_phrase="test phrase",
         weight=5,
         text="Test vacancy text",
-        link="https://t.me/test/12345"
+        link="https://t.me/test/12345",
     )
     assert vacancy_id is not None
-    
+
     # Get vacancies
     vacancies = db.get_vacancies()
     assert len(vacancies) == 1
     assert vacancies[0]["channel_name"] == "@test_channel"
-    
+
     # Cleanup
     os.remove(db_path)
+
 
 def test_is_message_processed():
     """Test duplicate detection."""
     db_path = "tests/test_duplicate.db"
-    
+
     if os.path.exists(db_path):
         os.remove(db_path)
-    
+
     db = Database(db_path)
-    
+
     # Message not processed yet
     assert db.is_message_processed("@channel", 12345) == False
-    
+
     # Mark as processed
     db.mark_message_processed("@channel", 12345)
-    
+
     # Now it's processed
     assert db.is_message_processed("@channel", 12345) == True
-    
+
     # Different message still not processed
     assert db.is_message_processed("@channel", 12346) == False
-    
+
     # Cleanup
     os.remove(db_path)
 ```
@@ -513,17 +520,18 @@ import json
 from datetime import datetime
 from typing import List, Dict, Optional, Any
 
+
 class Database:
     def __init__(self, db_path: str = "database/bot.db"):
         """Initialize database with all required tables."""
         self.db_path = db_path
         self._create_tables()
-    
+
     def _create_tables(self) -> None:
         """Create all required tables."""
         conn = sqlite3.connect(self.db_path)
         cursor = conn.cursor()
-        
+
         # Channels table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS channels (
@@ -533,7 +541,7 @@ class Database:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
+
         # Filters table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS filters (
@@ -546,7 +554,7 @@ class Database:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
+
         # Vacancies table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS vacancies (
@@ -562,7 +570,7 @@ class Database:
                 UNIQUE(channel_name, message_id)
             )
         """)
-        
+
         # Processed messages table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS processed_messages (
@@ -573,7 +581,7 @@ class Database:
                 UNIQUE(channel_name, message_id)
             )
         """)
-        
+
         # Error log table
         cursor.execute("""
             CREATE TABLE IF NOT EXISTS error_log (
@@ -584,30 +592,27 @@ class Database:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
-        
+
         conn.commit()
         conn.close()
-    
+
     def _get_conn(self) -> sqlite3.Connection:
         """Get database connection."""
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         return conn
-    
+
     # Channel operations
     def add_channel(self, channel_name: str) -> int:
         """Add a new channel."""
         conn = self._get_conn()
         cursor = conn.cursor()
-        cursor.execute(
-            "INSERT INTO channels (channel_name) VALUES (?)",
-            (channel_name,)
-        )
+        cursor.execute("INSERT INTO channels (channel_name) VALUES (?)", (channel_name,))
         conn.commit()
         channel_id = cursor.lastrowid
         conn.close()
         return channel_id
-    
+
     def get_channels(self) -> List[Dict[str, Any]]:
         """Get all channels."""
         conn = self._get_conn()
@@ -616,7 +621,7 @@ class Database:
         rows = cursor.fetchall()
         conn.close()
         return [dict(row) for row in rows]
-    
+
     def delete_channel(self, channel_id: int) -> bool:
         """Delete a channel."""
         conn = self._get_conn()
@@ -626,21 +631,23 @@ class Database:
         deleted = cursor.rowcount > 0
         conn.close()
         return deleted
-    
+
     # Filter operations
-    def add_filter(self, name: str, phrases: List[str], exclude: List[str] = None, weight: int = 5) -> int:
+    def add_filter(
+        self, name: str, phrases: List[str], exclude: List[str] = None, weight: int = 5
+    ) -> int:
         """Add a new filter."""
         conn = self._get_conn()
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO filters (name, phrases, exclude, weight) VALUES (?, ?, ?, ?)",
-            (name, json.dumps(phrases), json.dumps(exclude) if exclude else None, weight)
+            (name, json.dumps(phrases), json.dumps(exclude) if exclude else None, weight),
         )
         conn.commit()
         filter_id = cursor.lastrowid
         conn.close()
         return filter_id
-    
+
     def get_filters(self) -> List[Dict[str, Any]]:
         """Get all filters."""
         conn = self._get_conn()
@@ -648,7 +655,7 @@ class Database:
         cursor.execute("SELECT * FROM filters")
         rows = cursor.fetchall()
         conn.close()
-        
+
         filters = []
         for row in rows:
             filter_dict = dict(row)
@@ -657,7 +664,7 @@ class Database:
                 filter_dict["exclude"] = json.loads(filter_dict["exclude"])
             filters.append(filter_dict)
         return filters
-    
+
     def delete_filter(self, filter_id: int) -> bool:
         """Delete a filter."""
         conn = self._get_conn()
@@ -667,23 +674,31 @@ class Database:
         deleted = cursor.rowcount > 0
         conn.close()
         return deleted
-    
+
     # Vacancy operations
-    def add_vacancy(self, channel_name: str, message_id: int, category: str, 
-                    matched_phrase: str, weight: int, text: str, link: str) -> int:
+    def add_vacancy(
+        self,
+        channel_name: str,
+        message_id: int,
+        category: str,
+        matched_phrase: str,
+        weight: int,
+        text: str,
+        link: str,
+    ) -> int:
         """Add a new vacancy."""
         conn = self._get_conn()
         cursor = conn.cursor()
         cursor.execute(
-            """INSERT INTO vacancies (channel_name, message_id, category, matched_phrase, weight, text, link) 
+            """INSERT INTO vacancies (channel_name, message_id, category, matched_phrase, weight, text, link)
                VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (channel_name, message_id, category, matched_phrase, weight, text, link)
+            (channel_name, message_id, category, matched_phrase, weight, text, link),
         )
         conn.commit()
         vacancy_id = cursor.lastrowid
         conn.close()
         return vacancy_id
-    
+
     def get_vacancies(self, limit: int = 100) -> List[Dict[str, Any]]:
         """Get vacancies."""
         conn = self._get_conn()
@@ -692,7 +707,7 @@ class Database:
         rows = cursor.fetchall()
         conn.close()
         return [dict(row) for row in rows]
-    
+
     # Processed messages operations
     def is_message_processed(self, channel_name: str, message_id: int) -> bool:
         """Check if message was already processed."""
@@ -700,23 +715,23 @@ class Database:
         cursor = conn.cursor()
         cursor.execute(
             "SELECT COUNT(*) FROM processed_messages WHERE channel_name = ? AND message_id = ?",
-            (channel_name, message_id)
+            (channel_name, message_id),
         )
         count = cursor.fetchone()[0]
         conn.close()
         return count > 0
-    
+
     def mark_message_processed(self, channel_name: str, message_id: int) -> None:
         """Mark message as processed."""
         conn = self._get_conn()
         cursor = conn.cursor()
         cursor.execute(
             "INSERT OR IGNORE INTO processed_messages (channel_name, message_id) VALUES (?, ?)",
-            (channel_name, message_id)
+            (channel_name, message_id),
         )
         conn.commit()
         conn.close()
-    
+
     # Error logging
     def log_error(self, error_type: str, error_message: str, channel_name: str = None) -> None:
         """Log an error."""
@@ -724,45 +739,45 @@ class Database:
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO error_log (error_type, error_message, channel_name) VALUES (?, ?, ?)",
-            (error_type, error_message, channel_name)
+            (error_type, error_message, channel_name),
         )
         conn.commit()
         conn.close()
-    
+
     # Statistics
     def get_stats(self) -> Dict[str, Any]:
         """Get statistics."""
         conn = self._get_conn()
         cursor = conn.cursor()
-        
+
         # Total vacancies
         cursor.execute("SELECT COUNT(*) FROM vacancies")
         total_vacancies = cursor.fetchone()[0]
-        
+
         # Vacancies today
         cursor.execute("SELECT COUNT(*) FROM vacancies WHERE DATE(sent_at) = DATE('now')")
         vacancies_today = cursor.fetchone()[0]
-        
+
         # Total channels
         cursor.execute("SELECT COUNT(*) FROM channels")
         total_channels = cursor.fetchone()[0]
-        
+
         # Total filters
         cursor.execute("SELECT COUNT(*) FROM filters")
         total_filters = cursor.fetchone()[0]
-        
+
         # Errors today
         cursor.execute("SELECT COUNT(*) FROM error_log WHERE DATE(created_at) = DATE('now')")
         errors_today = cursor.fetchone()[0]
-        
+
         conn.close()
-        
+
         return {
             "total_vacancies": total_vacancies,
             "vacancies_today": vacancies_today,
             "total_channels": total_channels,
             "total_filters": total_filters,
-            "errors_today": errors_today
+            "errors_today": errors_today,
         }
 ```
 
@@ -800,102 +815,116 @@ git commit -m "feat: add database layer with CRUD operations"
 import pytest
 from filter.vacancy_filter import VacancyFilter, FilterResult
 
+
 @pytest.fixture
 def filter_config():
     return {
         "filters": [
             {
                 "name": "Junior позиции",
-                "phrases": [
-                    "junior media buyer",
-                    "junior medua buyer",
-                    "младший медиабайер"
-                ],
+                "phrases": ["junior media buyer", "junior medua buyer", "младший медиабайер"],
                 "exclude": ["senior junior"],
-                "weight": 10
+                "weight": 10,
             },
             {
                 "name": "Без опыта",
-                "phrases": [
-                    "без опыта",
-                    "для начинающих",
-                    "обучим с нуля"
-                ],
+                "phrases": ["без опыта", "для начинающих", "обучим с нуля"],
                 "exclude": [],
-                "weight": 8
-            }
+                "weight": 8,
+            },
         ]
     }
 
+
 def test_filter_exact_phrase_match():
     """Test that filter matches exact phrases."""
-    config = {"filters": [{"name": "Test", "phrases": ["junior media buyer"], "exclude": [], "weight": 5}]}
+    config = {
+        "filters": [{"name": "Test", "phrases": ["junior media buyer"], "exclude": [], "weight": 5}]
+    }
     vf = VacancyFilter(config)
-    
+
     message_text = "Ищем junior media buyer без опыта"
     results = vf.check_message(message_text)
-    
+
     assert len(results) == 1
     assert results[0].category == "Test"
     assert results[0].matched_phrase == "junior media buyer"
 
+
 def test_filter_no_match_on_partial():
     """Test that filter doesn't match partial words."""
-    config = {"filters": [{"name": "Test", "phrases": ["junior media buyer"], "exclude": [], "weight": 5}]}
+    config = {
+        "filters": [{"name": "Test", "phrases": ["junior media buyer"], "exclude": [], "weight": 5}]
+    }
     vf = VacancyFilter(config)
-    
+
     # "junior" alone should not match "junior media buyer"
     message_text = "Требуется junior разработчик"
     results = vf.check_message(message_text)
-    
+
     assert len(results) == 0
+
 
 def test_filter_exclude_words():
     """Test that exclude words prevent matching."""
-    config = {"filters": [{"name": "Test", "phrases": ["junior media buyer"], "exclude": ["senior junior"], "weight": 5}]}
+    config = {
+        "filters": [
+            {
+                "name": "Test",
+                "phrases": ["junior media buyer"],
+                "exclude": ["senior junior"],
+                "weight": 5,
+            }
+        ]
+    }
     vf = VacancyFilter(config)
-    
+
     message_text = "senior junior media buyer"
     results = vf.check_message(message_text)
-    
+
     assert len(results) == 0
+
 
 def test_filter_multiple_matches():
     """Test that filter can match multiple phrases from different categories."""
     config = {
         "filters": [
             {"name": "Junior", "phrases": ["junior media buyer"], "exclude": [], "weight": 10},
-            {"name": "Без опыта", "phrases": ["без опыта"], "exclude": [], "weight": 8}
+            {"name": "Без опыта", "phrases": ["без опыта"], "exclude": [], "weight": 8},
         ]
     }
     vf = VacancyFilter(config)
-    
+
     message_text = "junior media buyer без опыта"
     results = vf.check_message(message_text)
-    
+
     assert len(results) == 2
     categories = [r.category for r in results]
     assert "Junior" in categories
     assert "Без опыта" in categories
 
+
 def test_filter_case_insensitive():
     """Test that filter is case insensitive."""
-    config = {"filters": [{"name": "Test", "phrases": ["junior media buyer"], "exclude": [], "weight": 5}]}
+    config = {
+        "filters": [{"name": "Test", "phrases": ["junior media buyer"], "exclude": [], "weight": 5}]
+    }
     vf = VacancyFilter(config)
-    
+
     message_text = "JUNIOR MEDIA BUYER"
     results = vf.check_message(message_text)
-    
+
     assert len(results) == 1
+
 
 def test_filter_with_filter_config(filter_config):
     """Test filter with full config."""
     vf = VacancyFilter(filter_config)
-    
+
     # Should match
     results = vf.check_message("Ищем junior media buyer без опыта")
     assert len(results) == 2
-    
+
     # Should not match (exclude)
     results = vf.check_message("senior junior media buyer")
     assert len(results) == 0
@@ -917,45 +946,50 @@ import re
 from dataclasses import dataclass
 from typing import List, Dict, Any
 
+
 @dataclass
 class FilterResult:
     """Result of filter matching."""
+
     category: str
     matched_phrase: str
     weight: int
     original_text: str
 
+
 class VacancyFilter:
     def __init__(self, config: Dict[str, Any]):
         """Initialize filter with config."""
         self.filters = config.get("filters", [])
-    
+
     def check_message(self, message_text: str) -> List[FilterResult]:
         """Check message against all filters."""
         results = []
-        
+
         for filter_config in self.filters:
             category = filter_config["name"]
             phrases = filter_config.get("phrases", [])
             exclude = filter_config.get("exclude", [])
             weight = filter_config.get("weight", 5)
-            
+
             # Check if any exclude word is present
             if self._has_exclude_word(message_text, exclude):
                 continue
-            
+
             # Check for phrase matches
             matched_phrase = self._find_phrase_match(message_text, phrases)
             if matched_phrase:
-                results.append(FilterResult(
-                    category=category,
-                    matched_phrase=matched_phrase,
-                    weight=weight,
-                    original_text=message_text
-                ))
-        
+                results.append(
+                    FilterResult(
+                        category=category,
+                        matched_phrase=matched_phrase,
+                        weight=weight,
+                        original_text=message_text,
+                    )
+                )
+
         return results
-    
+
     def _has_exclude_word(self, text: str, exclude_words: List[str]) -> bool:
         """Check if text contains any exclude word."""
         text_lower = text.lower()
@@ -963,7 +997,7 @@ class VacancyFilter:
             if word.lower() in text_lower:
                 return True
         return False
-    
+
     def _find_phrase_match(self, text: str, phrases: List[str]) -> str:
         """Find exact phrase match in text."""
         text_lower = text.lower()
@@ -1008,58 +1042,52 @@ import pytest
 from unittest.mock import Mock, AsyncMock, patch
 from collector.telegram_collector import TelegramCollector
 
+
 @pytest.fixture
 def collector_config():
     return {
-        "telegram": {
-            "api_id": "12345",
-            "api_hash": "test_hash",
-            "bot_token": "test_token"
-        },
-        "channels": ["@channel1", "@channel2"]
+        "telegram": {"api_id": "12345", "api_hash": "test_hash", "bot_token": "test_token"},
+        "channels": ["@channel1", "@channel2"],
     }
+
 
 def test_collector_initialization():
     """Test that collector initializes correctly."""
-    config = {
-        "telegram": {"api_id": "12345", "api_hash": "test_hash"},
-        "channels": ["@channel1"]
-    }
-    
+    config = {"telegram": {"api_id": "12345", "api_hash": "test_hash"}, "channels": ["@channel1"]}
+
     collector = TelegramCollector(config)
     assert collector.channels == ["@channel1"]
     assert collector.api_id == "12345"
+
 
 def test_collector_formats_channel_name():
     """Test channel name formatting."""
     config = {
         "telegram": {"api_id": "12345", "api_hash": "test_hash"},
-        "channels": ["channel1", "@channel1"]
+        "channels": ["channel1", "@channel1"],
     }
-    
+
     collector = TelegramCollector(config)
-    
+
     # Both should be formatted the same
     assert collector._format_channel("channel1") == "channel1"
     assert collector._format_channel("@channel1") == "channel1"
 
+
 @pytest.mark.asyncio
 async def test_collector_checks_duplicate_messages():
     """Test that collector skips already processed messages."""
-    config = {
-        "telegram": {"api_id": "12345", "api_hash": "test_hash"},
-        "channels": ["@channel1"]
-    }
-    
+    config = {"telegram": {"api_id": "12345", "api_hash": "test_hash"}, "channels": ["@channel1"]}
+
     mock_db = Mock()
     mock_db.is_message_processed.return_value = True  # Already processed
-    
+
     collector = TelegramCollector(config, db=mock_db)
-    
+
     # Mock message
     mock_message = Mock()
     mock_message.id = 12345
-    
+
     # Should skip this message
     should_process = not mock_db.is_message_processed("@channel1", 12345)
     assert should_process == False
@@ -1084,40 +1112,41 @@ from telethon.tl.types import Message
 
 logger = logging.getLogger(__name__)
 
+
 class TelegramCollector:
     def __init__(self, config: Dict[str, Any], db=None):
         """Initialize collector with config and database."""
         self.config = config
         self.db = db
         self.channels = config.get("channels", [])
-        
+
         telegram_config = config.get("telegram", {})
         self.api_id = telegram_config.get("api_id")
         self.api_hash = telegram_config.get("api_hash")
         self.bot_token = telegram_config.get("bot_token")
-        
+
         self.client = None
-    
+
     def _format_channel(self, channel: str) -> str:
         """Format channel name (remove @ if present)."""
         return channel.lstrip("@")
-    
+
     async def start(self) -> None:
         """Start the Telegram client."""
-        self.client = TelegramClient('vacancy_bot', self.api_id, self.api_hash)
+        self.client = TelegramClient("vacancy_bot", self.api_id, self.api_hash)
         await self.client.start(bot_token=self.bot_token)
         logger.info("Telegram client started")
-    
+
     async def stop(self) -> None:
         """Stop the Telegram client."""
         if self.client:
             await self.client.disconnect()
             logger.info("Telegram client stopped")
-    
+
     async def check_channels(self) -> List[Dict[str, Any]]:
         """Check all channels for new messages."""
         all_messages = []
-        
+
         for channel in self.channels:
             try:
                 messages = await self.get_new_messages(channel)
@@ -1126,17 +1155,17 @@ class TelegramCollector:
                 logger.error(f"Error checking channel {channel}: {e}")
                 if self.db:
                     self.db.log_error("channel_error", str(e), channel)
-        
+
         return all_messages
-    
+
     async def get_new_messages(self, channel: str) -> List[Dict[str, Any]]:
         """Get new messages from a channel."""
         if not self.client:
             await self.start()
-        
+
         formatted_channel = self._format_channel(channel)
         messages = []
-        
+
         try:
             # Get last 10 messages
             async for message in self.client.iter_messages(formatted_channel, limit=10):
@@ -1144,26 +1173,26 @@ class TelegramCollector:
                     # Check if already processed
                     if self.db and self.db.is_message_processed(formatted_channel, message.id):
                         continue
-                    
+
                     # Process message
                     message_data = {
                         "channel": formatted_channel,
                         "id": message.id,
                         "text": message.text or "",
                         "date": message.date,
-                        "link": f"https://t.me/{formatted_channel}/{message.id}"
+                        "link": f"https://t.me/{formatted_channel}/{message.id}",
                     }
                     messages.append(message_data)
-                    
+
                     # Mark as processed
                     if self.db:
                         self.db.mark_message_processed(formatted_channel, message.id)
-        
+
         except Exception as e:
             logger.error(f"Error getting messages from {channel}: {e}")
             if self.db:
                 self.db.log_error("message_error", str(e), channel)
-        
+
         return messages
 ```
 
@@ -1203,60 +1232,44 @@ from unittest.mock import Mock, AsyncMock
 from notifier.telegram_notifier import TelegramNotifier
 from filter.vacancy_filter import FilterResult
 
+
 @pytest.fixture
 def notifier_config():
-    return {
-        "telegram": {
-            "bot_token": "test_token",
-            "target_channel": "@test_channel"
-        }
-    }
+    return {"telegram": {"bot_token": "test_token", "target_channel": "@test_channel"}}
+
 
 def test_notifier_initialization():
     """Test that notifier initializes correctly."""
-    config = {
-        "telegram": {
-            "bot_token": "test_token",
-            "target_channel": "@test_channel"
-        }
-    }
-    
+    config = {"telegram": {"bot_token": "test_token", "target_channel": "@test_channel"}}
+
     notifier = TelegramNotifier(config)
     assert notifier.target_channel == "@test_channel"
 
+
 def test_notifier_formats_message():
     """Test message formatting."""
-    config = {
-        "telegram": {
-            "bot_token": "test_token",
-            "target_channel": "@test_channel"
-        }
-    }
-    
+    config = {"telegram": {"bot_token": "test_token", "target_channel": "@test_channel"}}
+
     notifier = TelegramNotifier(config)
-    
+
     vacancy = FilterResult(
         category="Junior позиции",
         matched_phrase="junior media buyer",
         weight=10,
-        original_text="Ищем junior media buyer без опыта"
+        original_text="Ищем junior media buyer без опыта",
     )
-    
+
     message = notifier.format_message(vacancy)
-    
+
     assert "Junior позиции" in message
     assert "junior media buyer" in message
     assert "Ищем junior media buyer без опыта" in message
 
+
 def test_notifier_strips_channel_prefix():
     """Test that channel prefix is stripped."""
-    config = {
-        "telegram": {
-            "bot_token": "test_token",
-            "target_channel": "@test_channel"
-        }
-    }
-    
+    config = {"telegram": {"bot_token": "test_token", "target_channel": "@test_channel"}}
+
     notifier = TelegramNotifier(config)
     assert notifier.target_channel == "test_channel"
 ```
@@ -1280,6 +1293,7 @@ from filter.vacancy_filter import FilterResult
 
 logger = logging.getLogger(__name__)
 
+
 class TelegramNotifier:
     def __init__(self, config: Dict[str, Any]):
         """Initialize notifier with config."""
@@ -1288,42 +1302,47 @@ class TelegramNotifier:
         self.bot_token = telegram_config.get("bot_token")
         self.target_channel = telegram_config.get("target_channel", "").lstrip("@")
         self.client = None
-    
+
     async def start(self) -> None:
         """Start the Telegram client."""
-        self.client = TelegramClient('notifier_bot', self.config["telegram"]["api_id"], 
-                                     self.config["telegram"]["api_hash"])
+        self.client = TelegramClient(
+            "notifier_bot", self.config["telegram"]["api_id"], self.config["telegram"]["api_hash"]
+        )
         await self.client.start(bot_token=self.bot_token)
         logger.info("Notifier client started")
-    
+
     async def stop(self) -> None:
         """Stop the Telegram client."""
         if self.client:
             await self.client.disconnect()
             logger.info("Notifier client stopped")
-    
-    def format_message(self, vacancy: FilterResult, channel: str = None, message_id: int = None) -> str:
+
+    def format_message(
+        self, vacancy: FilterResult, channel: str = None, message_id: int = None
+    ) -> str:
         """Format vacancy as message."""
         link = f"https://t.me/{channel}/{message_id}" if channel and message_id else "N/A"
-        
+
         message = f"""🔍 Найдена вакансия!
 
 📁 Категория: {vacancy.category}
 🔑 Фраза: {vacancy.matched_phrase}
-📡 Канал: {channel or 'N/A'}
+📡 Канал: {channel or "N/A"}
 📅 Дата: {vacancy.original_text[:50]}...
 🔗 Ссылка: {link}
 
 ---
 {vacancy.original_text}"""
-        
+
         return message
-    
-    async def send_vacancy(self, vacancy: FilterResult, channel: str = None, message_id: int = None) -> bool:
+
+    async def send_vacancy(
+        self, vacancy: FilterResult, channel: str = None, message_id: int = None
+    ) -> bool:
         """Send vacancy notification to target channel."""
         if not self.client:
             await self.start()
-        
+
         try:
             message = self.format_message(vacancy, channel, message_id)
             await self.client.send_message(self.target_channel, message)
@@ -1332,12 +1351,12 @@ class TelegramNotifier:
         except Exception as e:
             logger.error(f"Error sending vacancy: {e}")
             return False
-    
+
     async def send_error(self, error: str) -> bool:
         """Send error notification."""
         if not self.client:
             await self.start()
-        
+
         try:
             message = f"❌ Ошибка бота:\n\n{error}"
             await self.client.send_message(self.target_channel, message)
@@ -1391,30 +1410,36 @@ from notifier.telegram_notifier import TelegramNotifier
 from web.app import create_app
 import uvicorn
 
+
 def load_config(config_path: str = "config.yaml") -> dict:
     """Load configuration from YAML file."""
-    with open(config_path, 'r', encoding='utf-8') as f:
+    with open(config_path, "r", encoding="utf-8") as f:
         return yaml.safe_load(f)
 
-async def check_and_notify(collector: TelegramCollector, vacancy_filter: VacancyFilter, 
-                          notifier: TelegramNotifier, db: Database):
+
+async def check_and_notify(
+    collector: TelegramCollector,
+    vacancy_filter: VacancyFilter,
+    notifier: TelegramNotifier,
+    db: Database,
+):
     """Check channels and send notifications for matches."""
     logger = get_logger()
     logger.info("Starting channel check...")
-    
+
     try:
         # Get new messages from all channels
         messages = await collector.check_channels()
         logger.info(f"Found {len(messages)} new messages")
-        
+
         # Check each message against filters
         for message in messages:
             results = vacancy_filter.check_message(message["text"])
-            
+
             for result in results:
                 # Send notification
                 sent = await notifier.send_vacancy(result, message["channel"], message["id"])
-                
+
                 if sent:
                     # Save to database
                     db.add_vacancy(
@@ -1424,74 +1449,74 @@ async def check_and_notify(collector: TelegramCollector, vacancy_filter: Vacancy
                         matched_phrase=result.matched_phrase,
                         weight=result.weight,
                         text=message["text"],
-                        link=message["link"]
+                        link=message["link"],
                     )
                     logger.info(f"Vacancy sent: {result.category} - {result.matched_phrase}")
-    
+
     except Exception as e:
         logger.error(f"Error in check_and_notify: {e}")
         db.log_error("check_error", str(e))
         await notifier.send_error(str(e))
 
+
 async def main():
     """Main entry point."""
     # Load config
     config = load_config()
-    
+
     # Setup logging
     log_config = config.get("logging", {})
     setup_logger(
-        log_file=log_config.get("file", "logs/bot.log"),
-        level=log_config.get("level", "INFO")
+        log_file=log_config.get("file", "logs/bot.log"), level=log_config.get("level", "INFO")
     )
     logger = get_logger()
     logger.info("Starting Telegram Vacancy Bot...")
-    
+
     # Initialize components
     db = Database()
     collector = TelegramCollector(config, db)
     vacancy_filter = VacancyFilter(config)
     notifier = TelegramNotifier(config)
-    
+
     # Start Telegram clients
     await collector.start()
     await notifier.start()
-    
+
     # Setup scheduler
     scheduler = AsyncIOScheduler()
     schedule_config = config.get("schedule", {})
     check_interval = schedule_config.get("check_interval_minutes", 15)
-    
+
     scheduler.add_job(
         check_and_notify,
         trigger=IntervalTrigger(minutes=check_interval),
         args=[collector, vacancy_filter, notifier, db],
         id="check_channels",
-        name="Check channels for new vacancies"
+        name="Check channels for new vacancies",
     )
-    
+
     scheduler.start()
     logger.info(f"Scheduler started. Checking every {check_interval} minutes")
-    
+
     # Run first check immediately
     await check_and_notify(collector, vacancy_filter, notifier, db)
-    
+
     # Setup web panel
     web_config = config.get("web", {})
     app = create_app(db, config)
-    
+
     # Start web server
     web_config = config.get("web", {})
     uvicorn_config = uvicorn.Config(
         app,
         host=web_config.get("host", "0.0.0.0"),
         port=web_config.get("port", 8000),
-        log_level="info"
+        log_level="info",
     )
     server = uvicorn.Server(uvicorn_config)
-    
+
     logger.info(f"Web panel starting on {web_config.get('host')}:{web_config.get('port')}")
-    
+
     # Run forever
     try:
         await server.serve()
@@ -1502,6 +1527,7 @@ async def main():
         await collector.stop()
         await notifier.stop()
         logger.info("Bot stopped")
+
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -1546,18 +1572,19 @@ import secrets
 
 security = HTTPBasic()
 
+
 def verify_credentials(credentials: HTTPBasicCredentials = Depends(security), config: dict = None):
     """Verify HTTP Basic Auth credentials."""
     if config is None:
         config = {}
-    
+
     web_config = config.get("web", {})
     correct_username = web_config.get("username", "admin")
     correct_password = web_config.get("password", "password")
-    
+
     username_correct = secrets.compare_digest(credentials.username, correct_username)
     password_correct = secrets.compare_digest(credentials.password, correct_password)
-    
+
     if not (username_correct and password_correct):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -1577,19 +1604,23 @@ from utils.database import Database
 
 router = APIRouter()
 
+
 def get_db():
     """Get database dependency."""
     return Database()
+
 
 @router.get("/api/vacancies")
 async def get_vacancies(limit: int = 100, db: Database = Depends(get_db)):
     """Get vacancies."""
     return db.get_vacancies(limit)
 
+
 @router.get("/api/channels")
 async def get_channels(db: Database = Depends(get_db)):
     """Get channels."""
     return db.get_channels()
+
 
 @router.post("/api/channels")
 async def add_channel(channel: Dict[str, str], db: Database = Depends(get_db)):
@@ -1597,9 +1628,10 @@ async def add_channel(channel: Dict[str, str], db: Database = Depends(get_db)):
     channel_name = channel.get("channel_name")
     if not channel_name:
         raise HTTPException(status_code=400, detail="channel_name required")
-    
+
     channel_id = db.add_channel(channel_name)
     return {"id": channel_id, "channel_name": channel_name}
+
 
 @router.delete("/api/channels/{channel_id}")
 async def delete_channel(channel_id: int, db: Database = Depends(get_db)):
@@ -1609,10 +1641,12 @@ async def delete_channel(channel_id: int, db: Database = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Channel not found")
     return {"deleted": True}
 
+
 @router.get("/api/filters")
 async def get_filters(db: Database = Depends(get_db)):
     """Get filters."""
     return db.get_filters()
+
 
 @router.post("/api/filters")
 async def add_filter(filter_data: Dict[str, Any], db: Database = Depends(get_db)):
@@ -1621,12 +1655,13 @@ async def add_filter(filter_data: Dict[str, Any], db: Database = Depends(get_db)
     phrases = filter_data.get("phrases", [])
     exclude = filter_data.get("exclude", [])
     weight = filter_data.get("weight", 5)
-    
+
     if not name:
         raise HTTPException(status_code=400, detail="name required")
-    
+
     filter_id = db.add_filter(name, phrases, exclude, weight)
     return {"id": filter_id, "name": name}
+
 
 @router.delete("/api/filters/{filter_id}")
 async def delete_filter(filter_id: int, db: Database = Depends(get_db)):
@@ -1636,10 +1671,12 @@ async def delete_filter(filter_id: int, db: Database = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Filter not found")
     return {"deleted": True}
 
+
 @router.get("/api/stats")
 async def get_stats(db: Database = Depends(get_db)):
     """Get statistics."""
     return db.get_stats()
+
 
 @router.get("/health")
 async def health_check():
@@ -1658,16 +1695,17 @@ from fastapi.templating import Jinja2Templates
 from web.routes import router
 from utils.database import Database
 
+
 def create_app(db: Database, config: dict) -> FastAPI:
     """Create FastAPI application."""
     app = FastAPI(title="Telegram Vacancy Bot", version="1.0.0")
-    
+
     # Include routes
     app.include_router(router)
-    
+
     # Templates
     templates = Jinja2Templates(directory="web/templates")
-    
+
     @app.get("/", response_class=HTMLResponse)
     async def index(request: Request):
         """Main page."""
@@ -1675,7 +1713,7 @@ def create_app(db: Database, config: dict) -> FastAPI:
         channels = db.get_channels()
         filters = db.get_filters()
         vacancies = db.get_vacancies(limit=50)
-        
+
         return templates.TemplateResponse(
             "index.html",
             {
@@ -1683,10 +1721,10 @@ def create_app(db: Database, config: dict) -> FastAPI:
                 "stats": stats,
                 "channels": channels,
                 "filters": filters,
-                "vacancies": vacancies
-            }
+                "vacancies": vacancies,
+            },
         )
-    
+
     return app
 ```
 
@@ -1794,7 +1832,7 @@ def create_app(db: Database, config: dict) -> FastAPI:
             <h1>🔍 Telegram Vacancy Bot</h1>
         </div>
     </header>
-    
+
     <div class="container">
         <!-- Statistics -->
         <div class="stats">
@@ -1815,7 +1853,7 @@ def create_app(db: Database, config: dict) -> FastAPI:
                 <div class="value">{{ stats.total_filters }}</div>
             </div>
         </div>
-        
+
         <!-- Channels -->
         <div class="section">
             <h2>📡 Каналы</h2>
@@ -1840,7 +1878,7 @@ def create_app(db: Database, config: dict) -> FastAPI:
                 </tbody>
             </table>
         </div>
-        
+
         <!-- Filters -->
         <div class="section">
             <h2>🏷️ Фильтры</h2>
@@ -1867,7 +1905,7 @@ def create_app(db: Database, config: dict) -> FastAPI:
                 </tbody>
             </table>
         </div>
-        
+
         <!-- Vacancies -->
         <div class="section">
             <h2>💼 Найденные вакансии</h2>
@@ -1903,7 +1941,7 @@ def create_app(db: Database, config: dict) -> FastAPI:
             </table>
         </div>
     </div>
-    
+
     <script>
         async function deleteChannel(id) {
             if (confirm('Удалить канал?')) {
@@ -1911,7 +1949,7 @@ def create_app(db: Database, config: dict) -> FastAPI:
                 location.reload();
             }
         }
-        
+
         async function deleteFilter(id) {
             if (confirm('Удалить фильтр?')) {
                 await fetch(`/api/filters/${id}`, { method: 'DELETE' });
@@ -2035,46 +2073,42 @@ from collector.telegram_collector import TelegramCollector
 from filter.vacancy_filter import VacancyFilter
 from notifier.telegram_notifier import TelegramNotifier
 
+
 def test_full_workflow():
     """Test complete workflow: collect -> filter -> notify."""
     # Setup
     db = Database("tests/test_integration.db")
-    
+
     config = {
         "telegram": {
             "api_id": "12345",
             "api_hash": "test_hash",
             "bot_token": "test_token",
-            "target_channel": "@test_channel"
+            "target_channel": "@test_channel",
         },
         "channels": ["@job_channel"],
         "filters": [
-            {
-                "name": "Junior",
-                "phrases": ["junior media buyer"],
-                "exclude": [],
-                "weight": 10
-            }
-        ]
+            {"name": "Junior", "phrases": ["junior media buyer"], "exclude": [], "weight": 10}
+        ],
     }
-    
+
     collector = TelegramCollector(config, db)
     vacancy_filter = VacancyFilter(config)
     notifier = TelegramNotifier(config)
-    
+
     # Simulate message
     test_message = "Ищем junior media buyer без опыта"
-    
+
     # Check filter
     results = vacancy_filter.check_message(test_message)
     assert len(results) == 1
     assert results[0].category == "Junior"
-    
+
     # Check database
     assert db.is_message_processed("@job_channel", 12345) == False
     db.mark_message_processed("@job_channel", 12345)
     assert db.is_message_processed("@job_channel", 12345) == True
-    
+
     # Add vacancy to database
     vacancy_id = db.add_vacancy(
         channel_name="@job_channel",
@@ -2083,20 +2117,21 @@ def test_full_workflow():
         matched_phrase=results[0].matched_phrase,
         weight=results[0].weight,
         text=test_message,
-        link="https://t.me/job_channel/12345"
+        link="https://t.me/job_channel/12345",
     )
     assert vacancy_id is not None
-    
+
     # Cleanup
     os.remove("tests/test_integration.db")
+
 
 def test_config_loading():
     """Test that config loads correctly."""
     import yaml
-    
+
     with open("config.yaml", "r") as f:
         config = yaml.safe_load(f)
-    
+
     assert "telegram" in config
     assert "channels" in config
     assert "filters" in config
@@ -2277,5 +2312,5 @@ Plan complete and saved to `docs/superpowers/plans/2026-09-20-telegram-vacancy-b
 
 **Which approach?**
 
-A) Subagent-Driven (рекомендую)  
+A) Subagent-Driven (рекомендую)
 B) Inline Execution

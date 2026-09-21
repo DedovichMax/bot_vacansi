@@ -1,7 +1,7 @@
 # Telegram Vacancy Bot — Design Specification
 
-**Дата:** 2026-09-20  
-**Статус:** Approved  
+**Дата:** 2026-09-20
+**Статус:** Approved
 **Версия:** 1.0
 
 ---

@@ -42,7 +42,7 @@ class TelegramNotifier:
 
 📁 Категория: {vacancy.category}
 🔑 Фраза: {vacancy.matched_phrase}
-📡 Канал: {channel or 'N/A'}
+📡 Канал: {channel or "N/A"}
 📅 Дата: {vacancy.original_text[:50]}...
 🔗 Ссылка: {link}
 
