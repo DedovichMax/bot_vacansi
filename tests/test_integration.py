@@ -5,21 +5,22 @@ These tests verify the full pipeline works end-to-end by testing how
 components interact: Database + Collector + Filter + Notifier + Config.
 All Telegram API calls are mocked — no real connections are made.
 """
+
 import os
-import asyncio
-import yaml
+from unittest.mock import AsyncMock
+
 import pytest
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
+import yaml
 
-from utils.database import Database
 from collector.telegram_collector import TelegramCollector
-from filter.vacancy_filter import VacancyFilter, FilterResult
+from filter.vacancy_filter import FilterResult, VacancyFilter
 from notifier.telegram_notifier import TelegramNotifier
-
+from utils.database import Database
 
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture
 def db_path(tmp_path):
@@ -100,6 +101,7 @@ def full_config():
 # 1. Full workflow: Collect → Filter → Notify → Persist
 # ---------------------------------------------------------------------------
 
+
 class TestFullWorkflow:
     """End-to-end pipeline tests with mocked Telegram I/O."""
 
@@ -109,7 +111,7 @@ class TestFullWorkflow:
         Each message is stored at most once (highest-weight match wins)
         because the DB enforces UNIQUE(channel_name, message_id) on vacancies.
         """
-        collector = TelegramCollector(full_config, db=db)
+        TelegramCollector(full_config, db=db)
         vf = VacancyFilter(full_config)
 
         # --- simulate collected messages ---
@@ -192,7 +194,7 @@ class TestFullWorkflow:
     @pytest.mark.asyncio
     async def test_full_pipeline_with_mocked_notifier(self, db, full_config):
         """Full async pipeline: collector → filter → mock notifier → DB."""
-        collector = TelegramCollector(full_config, db=db)
+        TelegramCollector(full_config, db=db)
         vf = VacancyFilter(full_config)
         notifier = TelegramNotifier(full_config)
 
@@ -240,6 +242,7 @@ class TestFullWorkflow:
 # 2. Component interaction: Collector + Database
 # ---------------------------------------------------------------------------
 
+
 class TestCollectorDatabaseInteraction:
     """Verify collector integrates properly with database for dedup."""
 
@@ -251,7 +254,7 @@ class TestCollectorDatabaseInteraction:
 
         try:
             db = Database(db_path)
-            collector = TelegramCollector(full_config, db=db)
+            TelegramCollector(full_config, db=db)
 
             # Mark message as already processed
             db.mark_message_processed("job_channel_1", 9999)
@@ -269,6 +272,7 @@ class TestCollectorDatabaseInteraction:
 # ---------------------------------------------------------------------------
 # 3. Component interaction: Filter + Database persistence
 # ---------------------------------------------------------------------------
+
 
 class TestFilterDatabaseInteraction:
     """Verify filter results are correctly persisted to database."""
@@ -351,6 +355,7 @@ class TestFilterDatabaseInteraction:
 # 4. Notifier + Filter interaction
 # ---------------------------------------------------------------------------
 
+
 class TestNotifierFilterInteraction:
     """Verify notifier formats filter results correctly."""
 
@@ -417,12 +422,13 @@ class TestNotifierFilterInteraction:
 # 5. Config loading integration
 # ---------------------------------------------------------------------------
 
+
 class TestConfigLoading:
     """Verify config.yaml loads and has all required sections."""
 
     def test_config_loading(self):
         """Test that config loads correctly."""
-        with open("config.yaml", "r", encoding="utf-8") as f:
+        with open("config.yaml", encoding="utf-8") as f:
             config = yaml.safe_load(f)
 
         assert "telegram" in config
@@ -434,7 +440,7 @@ class TestConfigLoading:
 
     def test_config_has_required_telegram_keys(self):
         """Config must have api_id, api_hash, bot_token, target_channel."""
-        with open("config.yaml", "r", encoding="utf-8") as f:
+        with open("config.yaml", encoding="utf-8") as f:
             config = yaml.safe_load(f)
 
         tg = config["telegram"]
@@ -445,7 +451,7 @@ class TestConfigLoading:
 
     def test_config_has_channels_list(self):
         """Config must have a non-empty channels list."""
-        with open("config.yaml", "r", encoding="utf-8") as f:
+        with open("config.yaml", encoding="utf-8") as f:
             config = yaml.safe_load(f)
 
         assert isinstance(config["channels"], list)
@@ -453,7 +459,7 @@ class TestConfigLoading:
 
     def test_config_has_filters_with_phrases(self):
         """Each filter must have name, phrases, and weight."""
-        with open("config.yaml", "r", encoding="utf-8") as f:
+        with open("config.yaml", encoding="utf-8") as f:
             config = yaml.safe_load(f)
 
         for f_cfg in config["filters"]:
@@ -465,7 +471,7 @@ class TestConfigLoading:
 
     def test_config_filter_factory_produces_working_engine(self):
         """Config filters should produce a working VacancyFilter."""
-        with open("config.yaml", "r", encoding="utf-8") as f:
+        with open("config.yaml", encoding="utf-8") as f:
             config = yaml.safe_load(f)
 
         vf = VacancyFilter(config)
@@ -479,6 +485,7 @@ class TestConfigLoading:
 # ---------------------------------------------------------------------------
 # 6. Database statistics integration
 # ---------------------------------------------------------------------------
+
 
 class TestDatabaseStats:
     """Verify database statistics reflect actual data."""
@@ -515,6 +522,7 @@ class TestDatabaseStats:
 # 7. Collector + Filter integration (simulated pipeline)
 # ---------------------------------------------------------------------------
 
+
 class TestCollectorFilterPipeline:
     """Simulate what main.py's check_and_notify does."""
 
@@ -524,7 +532,7 @@ class TestCollectorFilterPipeline:
         Each message is stored at most once (highest-weight match) due to
         UNIQUE(channel_name, message_id) on the vacancies table.
         """
-        collector = TelegramCollector(full_config, db=db)
+        TelegramCollector(full_config, db=db)
         vf = VacancyFilter(full_config)
 
         # Simulate messages that would come from collector.check_channels()

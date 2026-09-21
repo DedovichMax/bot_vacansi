@@ -1,6 +1,5 @@
 # web/auth.py
 import secrets
-from typing import Optional
 
 from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPBasic, HTTPBasicCredentials

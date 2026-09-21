@@ -1,8 +1,10 @@
 # tests/test_web.py
-import os
 import base64
+import os
+
 import pytest
 from fastapi.testclient import TestClient
+
 from utils.database import Database
 from web.app import create_app
 
@@ -22,14 +24,7 @@ def test_db():
 @pytest.fixture
 def test_config():
     """Test configuration."""
-    return {
-        "web": {
-            "host": "0.0.0.0",
-            "port": 8000,
-            "username": "admin",
-            "password": "secret123"
-        }
-    }
+    return {"web": {"host": "0.0.0.0", "port": 8000, "username": "admin", "password": "secret123"}}
 
 
 @pytest.fixture
@@ -47,6 +42,7 @@ def _auth_header(username="admin", password="secret123"):
 
 # --- Health check (no auth required) ---
 
+
 def test_health_endpoint():
     """Health endpoint returns 200 without auth."""
     config = {"web": {"username": "admin", "password": "pw"}}
@@ -63,6 +59,7 @@ def test_health_endpoint():
 
 
 # --- Auth tests ---
+
 
 def test_auth_rejects_wrong_credentials(client):
     """Wrong credentials return 401."""
@@ -96,6 +93,7 @@ def test_auth_api_endpoints_require_auth(client):
 
 
 # --- Channel API ---
+
 
 def test_get_channels_empty(client):
     """GET /api/channels returns empty list initially."""
@@ -138,6 +136,7 @@ def test_delete_channel_not_found(client):
 
 # --- Filter API ---
 
+
 def test_get_filters_empty(client):
     """GET /api/filters returns empty list initially."""
     resp = client.get("/api/filters", headers=_auth_header())
@@ -151,7 +150,7 @@ def test_add_filter(client):
         "name": "Junior",
         "phrases": ["junior dev", "начинающий"],
         "exclude": ["senior"],
-        "weight": 8
+        "weight": 8,
     }
     resp = client.post("/api/filters", json=payload, headers=_auth_header())
     assert resp.status_code == 200
@@ -183,6 +182,7 @@ def test_delete_filter_not_found(client):
 
 # --- Vacancy API ---
 
+
 def test_get_vacancies_empty(client):
     """GET /api/vacancies returns empty list initially."""
     resp = client.get("/api/vacancies", headers=_auth_header())
@@ -193,8 +193,13 @@ def test_get_vacancies_empty(client):
 def test_get_vacancies_after_add(test_db, test_config):
     """GET /api/vacancies returns vacancies created via DB."""
     test_db.add_vacancy(
-        channel_name="@ch", message_id=1, category="Cat",
-        matched_phrase="phrase", weight=5, text="text", link="http://link"
+        channel_name="@ch",
+        message_id=1,
+        category="Cat",
+        matched_phrase="phrase",
+        weight=5,
+        text="text",
+        link="http://link",
     )
     app = create_app(test_db, test_config)
     c = TestClient(app)
@@ -206,6 +211,7 @@ def test_get_vacancies_after_add(test_db, test_config):
 
 
 # --- Stats API ---
+
 
 def test_get_stats(client):
     """GET /api/stats returns statistics dict."""
@@ -221,6 +227,7 @@ def test_get_stats(client):
 
 # --- Index page (HTML) ---
 
+
 def test_index_page(client):
     """GET / returns HTML page with auth."""
     resp = client.get("/", headers=_auth_header())
@@ -230,9 +237,11 @@ def test_index_page(client):
 
 # --- create_app unit test ---
 
+
 def test_create_app_returns_fastapi():
     """create_app returns a FastAPI instance."""
     from fastapi import FastAPI
+
     config = {"web": {"username": "a", "password": "b"}}
     db = Database("tests/test_create_app.db")
     try:

@@ -1,10 +1,10 @@
 # web/routes.py
-from typing import Any, Dict
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
 
-from web.auth import verify_credentials
 from utils.database import Database
+from web.auth import verify_credentials
 
 router = APIRouter()
 
@@ -16,6 +16,7 @@ def _get_db(request: Request) -> Database:
 
 # --- Health (no auth) ---
 
+
 @router.get("/health")
 async def health_check():
     """Health check endpoint."""
@@ -23,6 +24,7 @@ async def health_check():
 
 
 # --- Channels ---
+
 
 @router.get("/api/channels")
 async def get_channels(
@@ -36,7 +38,7 @@ async def get_channels(
 
 @router.post("/api/channels")
 async def add_channel(
-    channel: Dict[str, str],
+    channel: dict[str, str],
     request: Request,
     _user: str = Depends(verify_credentials),
 ) -> dict:
@@ -66,6 +68,7 @@ async def delete_channel(
 
 # --- Filters ---
 
+
 @router.get("/api/filters")
 async def get_filters(
     request: Request,
@@ -78,7 +81,7 @@ async def get_filters(
 
 @router.post("/api/filters")
 async def add_filter(
-    filter_data: Dict[str, Any],
+    filter_data: dict[str, Any],
     request: Request,
     _user: str = Depends(verify_credentials),
 ) -> dict:
@@ -112,6 +115,7 @@ async def delete_filter(
 
 # --- Vacancies ---
 
+
 @router.get("/api/vacancies")
 async def get_vacancies(
     request: Request,
@@ -124,6 +128,7 @@ async def get_vacancies(
 
 
 # --- Stats ---
+
 
 @router.get("/api/stats")
 async def get_stats(

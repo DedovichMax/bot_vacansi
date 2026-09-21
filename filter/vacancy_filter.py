@@ -1,12 +1,12 @@
 # filter/vacancy_filter.py
-import re
 from dataclasses import dataclass
-from typing import List, Dict, Any
+from typing import Any
 
 
 @dataclass
 class FilterResult:
     """Result of filter matching."""
+
     category: str
     matched_phrase: str
     weight: int
@@ -14,11 +14,11 @@ class FilterResult:
 
 
 class VacancyFilter:
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: dict[str, Any]):
         """Initialize filter with config."""
         self.filters = config.get("filters", [])
 
-    def check_message(self, message_text: str) -> List[FilterResult]:
+    def check_message(self, message_text: str) -> list[FilterResult]:
         """Check message against all filters."""
         results = []
 
@@ -35,16 +35,18 @@ class VacancyFilter:
             # Check for phrase matches
             matched_phrase = self._find_phrase_match(message_text, phrases)
             if matched_phrase:
-                results.append(FilterResult(
-                    category=category,
-                    matched_phrase=matched_phrase,
-                    weight=weight,
-                    original_text=message_text
-                ))
+                results.append(
+                    FilterResult(
+                        category=category,
+                        matched_phrase=matched_phrase,
+                        weight=weight,
+                        original_text=message_text,
+                    )
+                )
 
         return results
 
-    def _has_exclude_word(self, text: str, exclude_words: List[str]) -> bool:
+    def _has_exclude_word(self, text: str, exclude_words: list[str]) -> bool:
         """Check if text contains any exclude word."""
         text_lower = text.lower()
         for word in exclude_words:
@@ -52,7 +54,7 @@ class VacancyFilter:
                 return True
         return False
 
-    def _find_phrase_match(self, text: str, phrases: List[str]) -> str | None:
+    def _find_phrase_match(self, text: str, phrases: list[str]) -> str | None:
         """Find exact phrase match in text."""
         text_lower = text.lower()
         for phrase in phrases:

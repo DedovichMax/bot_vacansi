@@ -3,9 +3,9 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
 
+from utils.database import Database
 from web.auth import verify_credentials
 from web.routes import router
-from utils.database import Database
 
 
 def create_app(db: Database, config: dict) -> FastAPI:

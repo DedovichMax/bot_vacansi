@@ -1,11 +1,12 @@
 # tests/test_main.py
 import os
-import pytest
-import asyncio
 import tempfile
+from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 import yaml
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
-from main import load_config, check_and_notify
+
+from main import check_and_notify, load_config
 
 
 @pytest.fixture
@@ -16,48 +17,44 @@ def sample_config():
             "api_id": "12345",
             "api_hash": "test_hash",
             "bot_token": "test_token",
-            "target_channel": "@test_channel"
+            "target_channel": "@test_channel",
         },
         "channels": ["@channel1", "@channel2"],
         "filters": [
-            {
-                "name": "Junior",
-                "phrases": ["junior media buyer"],
-                "exclude": [],
-                "weight": 10
-            }
+            {"name": "Junior", "phrases": ["junior media buyer"], "exclude": [], "weight": 10}
         ],
-        "schedule": {
-            "check_interval_minutes": 15
-        },
-        "web": {
-            "host": "0.0.0.0",
-            "port": 8000
-        },
-        "logging": {
-            "level": "INFO",
-            "file": "logs/bot.log"
-        }
+        "schedule": {"check_interval_minutes": 15},
+        "web": {"host": "0.0.0.0", "port": 8000},
+        "logging": {"level": "INFO", "file": "logs/bot.log"},
     }
 
 
 def test_load_config_reads_yaml():
     """Test that load_config reads YAML file correctly."""
-    config_data = {
-        "telegram": {"api_id": "123"},
-        "channels": ["@ch1"],
-        "filters": []
-    }
+    config_data = {"telegram": {"api_id": "123"}, "channels": ["@ch1"], "filters": []}
 
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         yaml.dump(config_data, f)
         temp_path = f.name
 
     try:
-        config = load_config(temp_path)
-        assert config["telegram"]["api_id"] == "123"
-        assert config["channels"] == ["@ch1"]
-        assert config["filters"] == []
+        # Clear env overrides so load_dotenv doesn't overwrite test values
+        with patch.dict(
+            os.environ,
+            {
+                "TELEGRAM_API_ID": "",
+                "TELEGRAM_API_HASH": "",
+                "TELEGRAM_BOT_TOKEN": "",
+                "TARGET_CHANNEL": "",
+                "WEB_USERNAME": "",
+                "WEB_PASSWORD": "",
+            },
+            clear=False,
+        ):
+            config = load_config(temp_path)
+            assert config["telegram"]["api_id"] == "123"
+            assert config["channels"] == ["@ch1"]
+            assert config["filters"] == []
     finally:
         os.remove(temp_path)
 
@@ -70,7 +67,7 @@ def test_load_config_missing_file():
 
 def test_load_config_invalid_yaml():
     """Test that load_config raises for invalid YAML."""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         f.write("{{invalid yaml: [")
         temp_path = f.name
 
@@ -90,7 +87,7 @@ async def test_check_and_notify_filters_and_sends(sample_config):
             "channel": "channel1",
             "id": 100,
             "text": "Ищем junior media buyer без опыта",
-            "link": "https://t.me/channel1/100"
+            "link": "https://t.me/channel1/100",
         }
     ]
 
@@ -139,7 +136,7 @@ async def test_check_and_notify_no_filter_matches(sample_config):
             "channel": "channel1",
             "id": 101,
             "text": "Продам квартиру",
-            "link": "https://t.me/channel1/101"
+            "link": "https://t.me/channel1/101",
         }
     ]
 
@@ -165,7 +162,7 @@ async def test_check_and_notify_sends_failure_logged(sample_config):
             "channel": "channel1",
             "id": 102,
             "text": "junior media buyer",
-            "link": "https://t.me/channel1/102"
+            "link": "https://t.me/channel1/102",
         }
     ]
 
@@ -213,14 +210,14 @@ async def test_check_and_notify_multiple_matches(sample_config):
             "channel": "channel1",
             "id": 200,
             "text": "junior media buyer без опыта",
-            "link": "https://t.me/channel1/200"
+            "link": "https://t.me/channel1/200",
         }
     ]
 
     mock_filter = Mock()
     mock_filter.check_message.return_value = [
         Mock(category="Junior", matched_phrase="junior media buyer", weight=10),
-        Mock(category="Без опыта", matched_phrase="без опыта", weight=8)
+        Mock(category="Без опыта", matched_phrase="без опыта", weight=8),
     ]
 
     mock_notifier = AsyncMock()
@@ -238,7 +235,7 @@ async def test_check_and_notify_multiple_matches(sample_config):
 
 def test_load_config_preserves_all_sections(sample_config):
     """Test that load_config preserves all config sections."""
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         yaml.dump(sample_config, f)
         temp_path = f.name
 

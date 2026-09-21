@@ -1,6 +1,7 @@
-import os
 import logging
-from utils.logger import setup_logger, get_logger
+import os
+
+from utils.logger import get_logger, setup_logger
 
 
 def _cleanup_logger(log_file: str) -> None:
@@ -46,7 +47,7 @@ def test_logger_writes_to_file():
     for handler in logger.handlers:
         handler.flush()
 
-    with open(log_file, 'r') as f:
+    with open(log_file) as f:
         content = f.read()
         assert "Test message" in content
 

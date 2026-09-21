@@ -1,28 +1,19 @@
 # tests/test_notifier.py
+
 import pytest
-from unittest.mock import Mock, AsyncMock
-from notifier.telegram_notifier import TelegramNotifier
+
 from filter.vacancy_filter import FilterResult
+from notifier.telegram_notifier import TelegramNotifier
 
 
 @pytest.fixture
 def notifier_config():
-    return {
-        "telegram": {
-            "bot_token": "test_token",
-            "target_channel": "@test_channel"
-        }
-    }
+    return {"telegram": {"bot_token": "test_token", "target_channel": "@test_channel"}}
 
 
 def test_notifier_initialization():
     """Test that notifier initializes correctly."""
-    config = {
-        "telegram": {
-            "bot_token": "test_token",
-            "target_channel": "@test_channel"
-        }
-    }
+    config = {"telegram": {"bot_token": "test_token", "target_channel": "@test_channel"}}
 
     notifier = TelegramNotifier(config)
     assert notifier.target_channel == "test_channel"
@@ -30,12 +21,7 @@ def test_notifier_initialization():
 
 def test_notifier_formats_message():
     """Test message formatting."""
-    config = {
-        "telegram": {
-            "bot_token": "test_token",
-            "target_channel": "@test_channel"
-        }
-    }
+    config = {"telegram": {"bot_token": "test_token", "target_channel": "@test_channel"}}
 
     notifier = TelegramNotifier(config)
 
@@ -43,7 +29,7 @@ def test_notifier_formats_message():
         category="Junior позиции",
         matched_phrase="junior media buyer",
         weight=10,
-        original_text="Ищем junior media buyer без опыта"
+        original_text="Ищем junior media buyer без опыта",
     )
 
     message = notifier.format_message(vacancy)
@@ -55,12 +41,7 @@ def test_notifier_formats_message():
 
 def test_notifier_strips_channel_prefix():
     """Test that channel prefix is stripped."""
-    config = {
-        "telegram": {
-            "bot_token": "test_token",
-            "target_channel": "@test_channel"
-        }
-    }
+    config = {"telegram": {"bot_token": "test_token", "target_channel": "@test_channel"}}
 
     notifier = TelegramNotifier(config)
     assert notifier.target_channel == "test_channel"
