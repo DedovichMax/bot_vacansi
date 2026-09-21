@@ -6,7 +6,6 @@ components interact: Database + Collector + Filter + Notifier + Config.
 All Telegram API calls are mocked — no real connections are made.
 """
 
-import os
 from unittest.mock import AsyncMock
 
 import pytest
@@ -246,27 +245,20 @@ class TestFullWorkflow:
 class TestCollectorDatabaseInteraction:
     """Verify collector integrates properly with database for dedup."""
 
-    def test_collector_skips_processed_messages(self, full_config):
+    def test_collector_skips_processed_messages(self, full_config, tmp_path):
         """Collector should skip messages already in processed_messages table."""
-        db_path = "tests/test_collector_int.db"
-        if os.path.exists(db_path):
-            os.remove(db_path)
+        db_path = tmp_path / "test_collector_int.db"
+        db = Database(str(db_path))
+        TelegramCollector(full_config, db=db)
 
-        try:
-            db = Database(db_path)
-            TelegramCollector(full_config, db=db)
+        # Mark message as already processed
+        db.mark_message_processed("job_channel_1", 9999)
 
-            # Mark message as already processed
-            db.mark_message_processed("job_channel_1", 9999)
+        # Simulate: collector sees this message → should skip
+        assert db.is_message_processed("job_channel_1", 9999) is True
 
-            # Simulate: collector sees this message → should skip
-            assert db.is_message_processed("job_channel_1", 9999) is True
-
-            # New message should not be marked
-            assert db.is_message_processed("job_channel_1", 10000) is False
-        finally:
-            if os.path.exists(db_path):
-                os.remove(db_path)
+        # New message should not be marked
+        assert db.is_message_processed("job_channel_1", 10000) is False
 
 
 # ---------------------------------------------------------------------------
@@ -423,13 +415,18 @@ class TestNotifierFilterInteraction:
 # ---------------------------------------------------------------------------
 
 
+def _load_example_config():
+    """Load config.yaml.example (always present in repo; config.yaml is gitignored)."""
+    with open("config.yaml.example", encoding="utf-8") as f:
+        return yaml.safe_load(f)
+
+
 class TestConfigLoading:
-    """Verify config.yaml loads and has all required sections."""
+    """Verify config.example loads and has all required sections."""
 
     def test_config_loading(self):
         """Test that config loads correctly."""
-        with open("config.yaml", encoding="utf-8") as f:
-            config = yaml.safe_load(f)
+        config = _load_example_config()
 
         assert "telegram" in config
         assert "channels" in config
@@ -440,8 +437,7 @@ class TestConfigLoading:
 
     def test_config_has_required_telegram_keys(self):
         """Config must have api_id, api_hash, bot_token, target_channel."""
-        with open("config.yaml", encoding="utf-8") as f:
-            config = yaml.safe_load(f)
+        config = _load_example_config()
 
         tg = config["telegram"]
         assert "api_id" in tg
@@ -451,16 +447,14 @@ class TestConfigLoading:
 
     def test_config_has_channels_list(self):
         """Config must have a non-empty channels list."""
-        with open("config.yaml", encoding="utf-8") as f:
-            config = yaml.safe_load(f)
+        config = _load_example_config()
 
         assert isinstance(config["channels"], list)
         assert len(config["channels"]) > 0
 
     def test_config_has_filters_with_phrases(self):
         """Each filter must have name, phrases, and weight."""
-        with open("config.yaml", encoding="utf-8") as f:
-            config = yaml.safe_load(f)
+        config = _load_example_config()
 
         for f_cfg in config["filters"]:
             assert "name" in f_cfg
@@ -471,8 +465,7 @@ class TestConfigLoading:
 
     def test_config_filter_factory_produces_working_engine(self):
         """Config filters should produce a working VacancyFilter."""
-        with open("config.yaml", encoding="utf-8") as f:
-            config = yaml.safe_load(f)
+        config = _load_example_config()
 
         vf = VacancyFilter(config)
         # Try matching a known phrase from config
