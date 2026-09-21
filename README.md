@@ -4,7 +4,7 @@ Telegram-бот для мониторинга каналов с вакансия
 
 ## Возможности
 
-- **Мониторинг каналов** — сбор сообщений из 10-50+ каналов Telegram через Telethon (userbot)
+- **Мониторинг каналов** — сбор сообщений из 10-50+ каналов Telegram через RSS-ленты (tg-channel-to-rss.vercel.app)
 - **Гибкая фильтрация** — поиск по категориям с точными фразами, поддержкаexclude-слов и весов
 - **Автоматические уведомления** — отправка найденных вакансий в указанный канал
 - **Детекция дубликатов** — повторная обработка одних и тех же сообщений исключена
@@ -19,7 +19,7 @@ Telegram-бот для мониторинга каналов с вакансия
 | Компонент | Технология |
 |-----------|-----------|
 | Язык | Python 3.11+ |
-| Telegram API | Telethon 1.34.0 |
+| Telegram API | RSS (tg-channel-to-rss.vercel.app) + Bot API |
 | База данных | SQLite |
 | Веб-сервер | FastAPI 0.115.0 + Uvicorn 0.30.0 |
 | Шаблонизация | Jinja2 3.1.4 |
@@ -135,14 +135,12 @@ docker-compose logs -f vacancy-bot
 Основной файл конфигурации:
 
 ```yaml
-# Telegram API (получить на my.telegram.org)
+# Telegram API (bot token от @BotFather)
 telegram:
-  api_id: "YOUR_API_ID"
-  api_hash: "YOUR_API_HASH"
   bot_token: "YOUR_BOT_TOKEN"
   target_channel: "@your_vacancy_channel"
 
-# Каналы для мониторинга
+# Каналы для мониторинга (через RSS)
 channels:
   - "@job_channel_1"
   - "@job_channel_2"
@@ -181,6 +179,14 @@ web:
 logging:
   level: "INFO"
   file: "logs/bot.log"
+  max_size_mb: 10
+  backup_count: 5
+
+# Резервное копирование
+backup:
+  enabled: true
+  interval_hours: 24
+  keep_last: 7
 ```
 
 ### Параметры фильтра
@@ -195,8 +201,6 @@ logging:
 ### Переменные окружения (.env)
 
 ```
-TELEGRAM_API_ID=your_api_id
-TELEGRAM_API_HASH=your_api_hash
 TELEGRAM_BOT_TOKEN=your_bot_token
 TARGET_CHANNEL=@your_channel
 WEB_USERNAME=admin
@@ -204,14 +208,6 @@ WEB_PASSWORD=secure_password
 ```
 
 ## Получение API ключей
-
-### Telegram API (api_id, api_hash)
-
-1. Перейдите на https://my.telegram.org
-2. Войдите в аккаунт Telegram
-3. Перейдите в "API development tools"
-4. Заполните форму создания приложения
-5. Скопируйте `api_id` и `api_hash`
 
 ### Bot Token
 
@@ -257,10 +253,10 @@ http://localhost:8000
 
 ## Как это работает
 
-1. **Сборщик** (Telethon userbot) подключается к Telegram и читает последние 10 сообщений из каждого канала
+1. **Сборщик** подключается к RSS-лентам каналов (через tg-channel-to-rss.vercel.app) и читает последние сообщения
 2. **Детекция дубликатов** — каждое обработанное сообщение помечается в БД, повторно не обрабатывается
 3. **Фильтр** проверяет текст сообщения на совпадение с настроенными фразами, учитывая exclude-слова
-4. **Уведомитель** форматирует и отправляет найденную вакансию в целевой канал
+4. **Уведомитель** форматирует и отправляет найденную вакансию в целевой канал через Bot API
 5. **Планировщик** повторяет цикл каждые N минут (настраивается в `config.yaml`)
 
 ## Деплой на Oracle Cloud Free
@@ -302,17 +298,46 @@ docker-compose up -d --build
 
 ## Разработка
 
+### Установка зависимостей
+
+```bash
+# Основные зависимости
+pip install -r requirements.txt
+
+# Dev-зависимости (линтеры, форматтеры, тесты)
+pip install ruff black mypy pytest-cov pre-commit
+```
+
+### Настройка pre-commit
+
+```bash
+pre-commit install
+```
+
+### Запуск линтеров
+
+```bash
+# Проверка стиля
+ruff check .
+
+# Форматирование
+ruff format .
+```
+
 ### Запуск тестов
 
 ```bash
-# Все тесты
-python -m pytest tests/ -v
+# Все тесты с coverage
+python -m pytest tests/ -v --tb=short
 
 # Конкретный модуль
 python -m pytest tests/test_filter.py -v
+```
 
-# С выводом coverage
-python -m pytest tests/ -v --tb=short
+### Type checking
+
+```bash
+mypy --ignore-missing-imports collector/ filter/ notifier/ utils/ web/
 ```
 
 ### Добавление нового фильтра
@@ -352,7 +377,6 @@ channels:
 
 ### Ошибки подключения к Telegram
 
-- Убедитесь, что `api_id` и `api_hash` получены на my.telegram.org
 - Проверьте правильность `bot_token` от @BotFather
 - Telegram может блокировать при частых переподключениях. Подождите несколько минут
 
