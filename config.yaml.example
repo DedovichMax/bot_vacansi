@@ -15,9 +15,7 @@ filters:
   - name: "Junior позиции"
     phrases:
       - "junior media buyer"
-      - "junior medua buyer"
       - "младший медиабайер"
-      - "начинающий медиабайер"
     exclude:
       - "senior junior"
     weight: 10
@@ -26,24 +24,6 @@ filters:
     phrases:
       - "без опыта"
       - "для начинающих"
-      - "обучим с нуля"
-      - "обучение с нуля"
-    weight: 8
-
-  - name: "Farmer"
-    phrases:
-      - "farmer"
-      - "фармер"
-      - "accounts farmer"
-      - "аккаунт фармер"
-    weight: 7
-
-  - name: "Ассистент"
-    phrases:
-      - "assistant media buyer"
-      - "assistent media buyer"
-      - "ассистент медиабайер"
-      - "помощник медиабайера"
     weight: 8
 
 # Schedule settings
@@ -58,7 +38,7 @@ web:
   host: "0.0.0.0"
   port: 8000
   username: "admin"
-  password: "your_secure_password"
+  password: "YOUR_SECURE_PASSWORD"
 
 # Logging
 logging:

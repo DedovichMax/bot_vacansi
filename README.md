@@ -91,10 +91,13 @@ pip install -r requirements.txt
 3. Скопируйте и настройте конфигурацию:
 
 ```bash
+cp config.yaml.example config.yaml
 cp .env.example .env
 ```
 
 Отредактируйте `config.yaml` — впишите реальные API-ключи и настройте каналы/фильтры.
+
+> **Важно:** `config.yaml` добавлен в `.gitignore` и не отслеживается git'ом (содержит секреты). Используйте `config.yaml.example` как шаблон.
 
 4. Запустите бота:
 
@@ -278,6 +281,7 @@ sudo usermod -aG docker $USER
 ```bash
 git clone <repository-url>
 cd TG_bot
+cp config.yaml.example config.yaml
 cp .env.example .env
 # Отредактируйте config.yaml с реальными API-ключами
 ```
@@ -341,7 +345,8 @@ channels:
 
 ### Бот не запускается
 
-- Проверьте, что `config.yaml` существует и содержит корректный YAML
+- Убедитесь, что файл `config.yaml` существует (скопируйте из `config.yaml.example`: `cp config.yaml.example config.yaml`)
+- Проверьте, что `config.yaml` содержит корректный YAML и реальные API-ключи
 - Убедитесь, что API-ключи заполнены (без кавычек или с кавычками — оба варианта работают)
 - Проверьте логи: `cat logs/bot.log` или `docker-compose logs vacancy-bot`
 
