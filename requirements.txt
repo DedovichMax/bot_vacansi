@@ -10,3 +10,4 @@ aiofiles==24.1.0
 # Dev dependencies
 ruff>=0.4.0
 black>=24.0.0
+pytest-cov>=4.0.0

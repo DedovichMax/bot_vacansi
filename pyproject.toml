@@ -12,3 +12,12 @@ target-version = ["py311"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
+addopts = [
+    "--cov=collector",
+    "--cov=filter",
+    "--cov=notifier",
+    "--cov=utils",
+    "--cov=web",
+    "--cov-report=term-missing",
+    "--cov-fail-under=70",
+]
