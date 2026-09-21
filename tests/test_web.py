@@ -1,6 +1,5 @@
 # tests/test_web.py
 import base64
-import os
 
 import pytest
 from fastapi.testclient import TestClient
@@ -10,15 +9,11 @@ from web.app import create_app
 
 
 @pytest.fixture
-def test_db():
-    """Create test database."""
-    db_path = "tests/test_web.db"
-    if os.path.exists(db_path):
-        os.remove(db_path)
-    db = Database(db_path)
+def test_db(tmp_path):
+    """Create test database in a temporary directory."""
+    db_path = tmp_path / "test.db"
+    db = Database(str(db_path))
     yield db
-    if os.path.exists(db_path):
-        os.remove(db_path)
 
 
 @pytest.fixture
@@ -43,19 +38,16 @@ def _auth_header(username="admin", password="secret123"):
 # --- Health check (no auth required) ---
 
 
-def test_health_endpoint():
+def test_health_endpoint(tmp_path):
     """Health endpoint returns 200 without auth."""
     config = {"web": {"username": "admin", "password": "pw"}}
-    db = Database("tests/test_health.db")
-    try:
-        app = create_app(db, config)
-        c = TestClient(app)
-        resp = c.get("/health")
-        assert resp.status_code == 200
-        assert resp.json() == {"status": "healthy"}
-    finally:
-        if os.path.exists("tests/test_health.db"):
-            os.remove("tests/test_health.db")
+    db_path = tmp_path / "test_health.db"
+    db = Database(str(db_path))
+    app = create_app(db, config)
+    c = TestClient(app)
+    resp = c.get("/health")
+    assert resp.status_code == 200
+    assert resp.json() == {"status": "healthy"}
 
 
 # --- Auth tests ---
@@ -238,16 +230,13 @@ def test_index_page(client):
 # --- create_app unit test ---
 
 
-def test_create_app_returns_fastapi():
+def test_create_app_returns_fastapi(tmp_path):
     """create_app returns a FastAPI instance."""
     from fastapi import FastAPI
 
     config = {"web": {"username": "a", "password": "b"}}
-    db = Database("tests/test_create_app.db")
-    try:
-        app = create_app(db, config)
-        assert isinstance(app, FastAPI)
-        assert app.title == "Telegram Vacancy Bot"
-    finally:
-        if os.path.exists("tests/test_create_app.db"):
-            os.remove("tests/test_create_app.db")
+    db_path = tmp_path / "test_create_app.db"
+    db = Database(str(db_path))
+    app = create_app(db, config)
+    assert isinstance(app, FastAPI)
+    assert app.title == "Telegram Vacancy Bot"
