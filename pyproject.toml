@@ -10,6 +10,13 @@ ignore = ["E501"]
 line-length = 100
 target-version = ["py311"]
 
+[tool.mypy]
+python_version = "3.11"
+disallow_untyped_defs = false
+ignore_missing_imports = true
+warn_return_any = true
+warn_unused_configs = true
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 addopts = [
