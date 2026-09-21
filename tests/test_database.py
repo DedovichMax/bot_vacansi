@@ -1,16 +1,12 @@
 # tests/test_database.py
-import os
 import sqlite3
 
 from utils.database import Database
 
 
-def test_database_initialization():
+def test_database_initialization(tmp_path):
     """Test that database creates all tables on init."""
-    db_path = "tests/test.db"
-
-    if os.path.exists(db_path):
-        os.remove(db_path)
+    db_path = tmp_path / "test.db"
 
     Database(db_path)
 
@@ -27,16 +23,10 @@ def test_database_initialization():
     assert "processed_messages" in tables
     assert "error_log" in tables
 
-    # Cleanup
-    os.remove(db_path)
 
-
-def test_add_channel():
+def test_add_channel(tmp_path):
     """Test adding a channel to database."""
-    db_path = "tests/test_add_channel.db"
-
-    if os.path.exists(db_path):
-        os.remove(db_path)
+    db_path = tmp_path / "test_add_channel.db"
 
     db = Database(db_path)
 
@@ -50,16 +40,10 @@ def test_add_channel():
     assert channels[0]["channel_name"] == "@test_channel"
     assert channels[0]["is_active"]
 
-    # Cleanup
-    os.remove(db_path)
 
-
-def test_add_filter():
+def test_add_filter(tmp_path):
     """Test adding a filter to database."""
-    db_path = "tests/test_add_filter.db"
-
-    if os.path.exists(db_path):
-        os.remove(db_path)
+    db_path = tmp_path / "test_add_filter.db"
 
     db = Database(db_path)
 
@@ -77,16 +61,10 @@ def test_add_filter():
     assert len(filters) == 1
     assert filters[0]["name"] == "Test Filter"
 
-    # Cleanup
-    os.remove(db_path)
 
-
-def test_add_vacancy():
+def test_add_vacancy(tmp_path):
     """Test adding a vacancy to database."""
-    db_path = "tests/test_add_vacancy.db"
-
-    if os.path.exists(db_path):
-        os.remove(db_path)
+    db_path = tmp_path / "test_add_vacancy.db"
 
     db = Database(db_path)
 
@@ -107,16 +85,10 @@ def test_add_vacancy():
     assert len(vacancies) == 1
     assert vacancies[0]["channel_name"] == "@test_channel"
 
-    # Cleanup
-    os.remove(db_path)
 
-
-def test_is_message_processed():
+def test_is_message_processed(tmp_path):
     """Test duplicate detection."""
-    db_path = "tests/test_duplicate.db"
-
-    if os.path.exists(db_path):
-        os.remove(db_path)
+    db_path = tmp_path / "test_duplicate.db"
 
     db = Database(db_path)
 
@@ -131,6 +103,3 @@ def test_is_message_processed():
 
     # Different message still not processed
     assert not db.is_message_processed("@channel", 12346)
-
-    # Cleanup
-    os.remove(db_path)
